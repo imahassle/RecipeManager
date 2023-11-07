@@ -15,7 +15,9 @@ model User {
   updatedAt DateTime @updatedAt
 
   password Password?
-  notes    Note[]
+
+  notes   Note[]
+  recipes Recipe[]
 }
 
 model Password {
@@ -35,4 +37,60 @@ model Note {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String
+}
+
+model Recipe {
+  id     String      @id @default(cuid())
+  title  String
+  source String
+  tags   RecipeTag[]
+
+  ingredients Ingredient[]
+  steps       Step[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  User   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+
+  @@unique([userId, title])
+  @@index([title, userId])
+}
+
+model Ingredient {
+  id    String @id @default(cuid())
+  index Int    @unique @default(autoincrement())
+
+  amount String?
+  unit   String?
+  item   String
+
+  Recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  recipeId String
+}
+
+model Step {
+  id    String @id @default(cuid())
+  index Int    @unique @default(autoincrement())
+
+  text String?
+
+  Recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  recipeId String
+}
+
+model RecipeTag {
+  name        String   @id @unique
+  displayName String   @unique
+  recipes     Recipe[]
+}
+
+enum RecipeCategory {
+  Breakfast
+  Lunch
+  Dinner
+  Drink
+  Snack
+  Appetizer
 }
