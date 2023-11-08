@@ -41,8 +41,8 @@ model Note {
 
 model Recipe {
   id     String      @id @default(cuid())
-  title  String
-  source String
+  title  String?
+  source String?
   tags   RecipeTag[]
 
   ingredients Ingredient[]
@@ -60,24 +60,27 @@ model Recipe {
 
 model Ingredient {
   id    String @id @default(cuid())
-  index Int    @unique @default(autoincrement())
+  index Int    @unique
 
   amount String?
-  unit   String?
   item   String
 
   Recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   recipeId String
+
+  @@unique([id, recipeId])
 }
 
 model Step {
   id    String @id @default(cuid())
-  index Int    @unique @default(autoincrement())
+  index Int    @unique
 
   text String?
 
   Recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   recipeId String
+
+  @@unique([id, recipeId])
 }
 
 model RecipeTag {
