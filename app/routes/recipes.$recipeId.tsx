@@ -2,6 +2,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import {
   Form,
+  Link,
   isRouteErrorResponse,
   useLoaderData,
   useRouteError,
@@ -39,13 +40,17 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     return json({ errors: { source: "Invalid source type" } }, { status: 400 });
   }
 
+  console.log(`Updating recipe: ${params.recipeId}`);
+
   await updateRecipe({
     ...recipe,
     id: params.recipeId,
     userId,
   });
 
-  return redirect("/recipes");
+  console.log(`Recipe id: ${params.recipeId}`);
+
+  return redirect(`/recipes/${params.recipeId}`);
 };
 
 export default function RecipeDetailsPage() {
@@ -91,48 +96,67 @@ export default function RecipeDetailsPage() {
         <>
           {/* Recipe edit form */}
           <Form method="post">
-            <input
-              name="title"
-              type="text"
-              defaultValue={data.recipe.source ?? ""}
-            />
-            <input
-              name="source"
-              type="text"
-              defaultValue={data.recipe.source ?? ""}
-            />
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-auto gap-2">
+                <label htmlFor="title">Recipe title</label>
+                <input
+                  className="border-blue-500 border-2"
+                  name="title"
+                  type="text"
+                  defaultValue={data.recipe.title ?? ""}
+                />
+              </div>
+              <div className="flex flex-auto gap-2">
+                <label htmlFor="source">Recipe source</label>
+                <input
+                  className="border-blue-500 border-2"
+                  name="source"
+                  type="text"
+                  defaultValue={data.recipe.source ?? ""}
+                />
+              </div>
+              <div className="flex flex-row-reverse">
+                <button
+                  type="submit"
+                  className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+                >
+                  Save changes
+                </button>
+              </div>
+            </div>
             {/* <input name="tags" type="text" defaultValue={data.recipe.tags} multiple/> */}
           </Form>
         </>
       )}
 
       <hr className="my-4" />
-      <Form action="delete" method="post">
-        <button
-          type="submit"
-          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
-        >
-          Delete
-        </button>
-      </Form>
-
-      {!isEdit ? (
-        <button
-          name="edit"
-          value="true"
-          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
-        >
-          Edit
-        </button>
-      ) : (
-        <button
-          name="edit"
-          value="false"
-          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
-        >
-          Close edit
-        </button>
-      )}
+      <div className="flex flex-auto flex-row-reverse gap-2">
+        {!isEdit ? (
+          <Link
+            to="?edit=true"
+            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+          >
+            Edit
+          </Link>
+        ) : (
+          <div className="flex flex-auto flex-row-reverse gap-2">
+            <Link
+              to="."
+              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+            >
+              Close edit
+            </Link>
+            <Form action="delete" method="post">
+              <button
+                type="submit"
+                className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-400 focus:bg-red-600"
+              >
+                Delete
+              </button>
+            </Form>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
