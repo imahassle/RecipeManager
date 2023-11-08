@@ -55,6 +55,7 @@ model Recipe {
   userId String
 
   @@unique([userId, title])
+  @@unique([id, userId])
   @@index([title, userId])
 }
 

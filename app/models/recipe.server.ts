@@ -18,7 +18,7 @@ export function getRecipe({
 
 export function getRecipeListItems({userId}: UserId) {
     return prisma.recipe.findMany({
-        select: {title: true, tags: true},
+        select: {title: true, tags: true, id: true},
         where: {userId}
     })
 }
@@ -46,13 +46,15 @@ export function updateRecipe({
     title,
     source,
     steps,
-    ingredients
+    ingredients,
+    userId
 }: Pick<Recipe, ("id" | "title" | "source")>
 & {steps?: Step[]}
 & {ingredients?: Ingredient[]}
+& UserId
 ) {
     return prisma.recipe.update({
-        where: {id},
+        where: {id_userId: { id, userId}},
         data: {
             title,
             source,
