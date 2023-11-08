@@ -8,11 +8,29 @@ import {
   useRouteError,
   useSearchParams,
 } from "@remix-run/react";
+import { withZod } from "@remix-validated-form/with-zod";
+import { ValidatedForm, useFieldArray } from "remix-validated-form";
 import invariant from "tiny-invariant";
+import { z } from "zod";
 
-import { getRecipe, updateRecipe } from "~/models/recipe.server";
+import { FormInput } from "~/components/formInput";
+import { Step, getRecipe, updateRecipe } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 import { getRecipeFromForm } from "~/utils";
+
+export const validator = withZod(
+  z.object({
+    title: z.string().min(1, { message: "Title is required" }).nullable(),
+    source: z.string().nullable(),
+    steps: z.array(
+      z
+        .object({
+          text: z.string().nullable(),
+        })
+        .nullable(),
+    ),
+  }),
+);
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -54,7 +72,11 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 };
 
 export default function RecipeDetailsPage() {
-  const data = useLoaderData<typeof loader>();
+  const defaultValues = useLoaderData<typeof loader>();
+  // const data = useActionData<typeof action>();
+  const [steps, { push, remove }] = useFieldArray<Step>("steps", {
+    formId: "recipeUpdateForm",
+  });
   const [params] = useSearchParams();
   const isEdit = params.get("edit") === "true";
 
@@ -63,17 +85,17 @@ export default function RecipeDetailsPage() {
       {!isEdit ? (
         // Display the recipe
         <>
-          <h3 className="text-2xl font-bold">{data.recipe.title}</h3>
-          <p className="py-6">{data.recipe.source}</p>
+          <h3 className="text-2xl font-bold">{defaultValues.recipe.title}</h3>
+          <p className="py-6">{defaultValues.recipe.source}</p>
           <p>
             Tags:{" "}
-            {data.recipe.tags?.map((tag) => {
+            {defaultValues.recipe.tags?.map((tag) => {
               return <p key={tag.name}>{tag.displayName}</p>;
             })}
           </p>
           <p>Ingredients</p>
           <ul>
-            {data.recipe.ingredients
+            {defaultValues.recipe.ingredients
               ?.sort((i) => i.index)
               .map((ingredient) => {
                 return (
@@ -85,7 +107,7 @@ export default function RecipeDetailsPage() {
           </ul>
           <p>Steps</p>
           <ol>
-            {data.recipe.steps
+            {defaultValues.recipe.steps
               ?.sort((s) => s.index)
               .map((step) => {
                 return <li key={step.id}>{step.text}</li>;
@@ -95,7 +117,12 @@ export default function RecipeDetailsPage() {
       ) : (
         <>
           {/* Recipe edit form */}
-          <Form method="post">
+          <ValidatedForm
+            validator={validator}
+            method="post"
+            id="recipeUpdateForm"
+            defaultValues={defaultValues.recipe}
+          >
             <div className="flex flex-col gap-3">
               <div className="flex flex-auto gap-2">
                 <label htmlFor="title">Recipe title</label>
@@ -103,7 +130,7 @@ export default function RecipeDetailsPage() {
                   className="border-blue-500 border-2"
                   name="title"
                   type="text"
-                  defaultValue={data.recipe.title ?? ""}
+                  defaultValue={defaultValues.recipe.title ?? ""}
                 />
               </div>
               <div className="flex flex-auto gap-2">
@@ -112,8 +139,53 @@ export default function RecipeDetailsPage() {
                   className="border-blue-500 border-2"
                   name="source"
                   type="text"
-                  defaultValue={data.recipe.source ?? ""}
+                  defaultValue={defaultValues.recipe.source ?? ""}
                 />
+              </div>
+              <div className="flex flex-auto gap-2">
+                <ol className="flex flex-col gap-2">
+                  {steps.map(({ defaultValue, key }, index) => (
+                    <li key={key} className="flex flex-row gap-2">
+                      <div>
+                        <input
+                          type="hidden"
+                          name={`recipe.steps[${index}].index`}
+                          value={index}
+                        />
+                        <input
+                          type="hidden"
+                          name={`recipe.steps[${index}].id`}
+                          value={defaultValue.id}
+                        />
+                        <FormInput
+                          type="text"
+                          label={"step"}
+                          name={`recipe.steps[${index}].text`}
+                          multiple
+                        />
+                      </div>
+                      <button
+                        className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600 focus:bg-red-400"
+                        onClick={() => {
+                          remove(index);
+                        }}
+                      >
+                        X
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+              <div className="flex flex-auto gap-2">
+                <button
+                  type="button"
+                  className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-40"
+                  onClick={() => {
+                    push({});
+                  }}
+                >
+                  Add step
+                </button>
               </div>
               <div className="flex flex-row-reverse">
                 <button
@@ -125,7 +197,7 @@ export default function RecipeDetailsPage() {
               </div>
             </div>
             {/* <input name="tags" type="text" defaultValue={data.recipe.tags} multiple/> */}
-          </Form>
+          </ValidatedForm>
         </>
       )}
 

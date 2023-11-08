@@ -82,5 +82,6 @@ export function getRecipeFromForm(formData: FormData) {
   return {
     title: values.title,
     source: values.source,
-  } as Recipe;
+    steps: values.steps,
+  };
 }
