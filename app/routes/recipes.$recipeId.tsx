@@ -73,45 +73,60 @@ export async function action({ params, request }: ActionFunctionArgs) {
 }
 
 export default function RecipeDetailsPage() {
-  const defaultValues = useLoaderData<typeof loader>();
+  const { recipe } = useLoaderData<typeof loader>();
   // const data = useActionData<typeof action>();
 
   const [params] = useSearchParams();
   const isEdit = params.get("edit") === "true";
 
   return (
-    <div>
+    <div className="mx-12 my-6 flex flex-col gap-4">
       {!isEdit ? (
         // Display the recipe
         <>
-          <h3 className="text-2xl font-bold">{defaultValues.recipe.title}</h3>
-          <p className="py-6">{defaultValues.recipe.source}</p>
-          <p>
-            Tags:{" "}
-            {defaultValues.recipe.tags?.map((tag) => {
-              return <p key={tag.name}>{tag.displayName}</p>;
-            })}
-          </p>
-          <p>Ingredients</p>
-          <ul>
-            {defaultValues.recipe.ingredients
-              ?.sort((i) => i.index)
-              .map((ingredient) => {
+          <div className="flex flex-col items-center">
+            <h1 className="text-4xl font-bold mb-2 pb-0">{recipe.title}</h1>
+            {recipe.source ? (
+              <div className="py-2 italic">{recipe.source}</div>
+            ) : (
+              <div>-</div>
+            )}
+          </div>
+          {recipe.tags ? (
+            <div className="flex flex-row gap-2">
+              {recipe.tags.map((tag) => {
                 return (
-                  <li key={ingredient.index}>
-                    {ingredient.amount} {ingredient.item}
-                  </li>
+                  <div className="rounded p-1 bg-slate-400 " key={tag.name}>
+                    {tag.displayName}
+                  </div>
                 );
               })}
-          </ul>
-          <p>Steps</p>
-          <ol>
-            {defaultValues.recipe.steps
-              ?.sort((s) => s.index)
-              .map((step) => {
-                return <li key={step.index}>{step.text}</li>;
+            </div>
+          ) : null}
+          <div>
+            <h3 className="text-2xl">Ingredients</h3>
+          </div>
+          {recipe.ingredients
+            ?.sort((i) => i.index)
+            .map((ingredient) => {
+              return (
+                <div key={ingredient.index}>
+                  {ingredient.amount} {ingredient.item}
+                </div>
+              );
+            })}
+          <div>
+            {recipe.steps
+              .sort((s) => s.index)
+              .map((step, index) => {
+                return (
+                  <div className="flex flex-row gap-2" key={step.index}>
+                    <div>{index + 1}.</div>
+                    <div>{step.text}</div>
+                  </div>
+                );
               })}
-          </ol>
+          </div>
         </>
       ) : (
         <>
@@ -120,20 +135,20 @@ export default function RecipeDetailsPage() {
             method="post"
             validator={validator}
             noValidate={true}
-            defaultValues={defaultValues.recipe}
+            defaultValues={recipe}
           >
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-4">
               <div className="flex flex-auto gap-2">
-                <label htmlFor="title">Recipe title</label>
                 <FormInput
+                  label="Title"
                   className="border-blue-500 border-2"
                   name="title"
                   type="text"
                 />
               </div>
               <div className="flex flex-auto gap-2">
-                <label htmlFor="source">Recipe source</label>
                 <FormInput
+                  label="Source"
                   className="border-blue-500 border-2"
                   name="source"
                   type="text"

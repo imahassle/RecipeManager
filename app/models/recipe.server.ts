@@ -61,7 +61,7 @@ export function updateRecipe({
   ingredients,
   userId,
 }: RecipeUpdate) {
-  return prisma.recipe.update({
+  prisma.recipe.update({
     where: { id_userId: { id, userId } },
     data: {
       title,
@@ -93,4 +93,19 @@ export function updateRecipe({
       },
     },
   });
+  // Clean up extra steps that were not overwritten
+  if (steps) {
+    prisma.step.deleteMany({
+      where: {
+        recipeId: id,
+        AND: [
+          {
+            index: {
+              gte: steps?.length,
+            },
+          },
+        ],
+      },
+    });
+  }
 }
