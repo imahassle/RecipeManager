@@ -18,21 +18,22 @@ import { RecipeStepInput } from "~/components/recipeStepInput";
 import { SubmitButton } from "~/components/submitButton";
 import { Step, getRecipe, updateRecipe } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
-import { getRecipeFromForm } from "~/utils";
+import { getObject } from "~/utils";
 
-export const validator = withZod(
-  z.object({
-    title: z.string().min(1, { message: "Title is required" }).nullable(),
-    source: z.string().nullable(),
-    steps: z.array(
-      z
-        .object({
-          text: z.string().nullable(),
-        })
-        .nullable(),
-    ),
-  }),
-);
+const recipeUpdateSchema = z.object({
+  title: z.string().min(1, { message: "Title is required" }).nullable(),
+  source: z.string().nullable(),
+  steps: z.array(
+    z
+      .object({
+        text: z.string().nullable(),
+        index: z.coerce.number(),
+      })
+      .nullable(),
+  ),
+});
+
+const validator = withZod(recipeUpdateSchema);
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -49,8 +50,7 @@ export async function action({ params, request }: ActionFunctionArgs) {
   const userId = await requireUserId(request);
   invariant(params.recipeId, "recipeId not found");
 
-  const formData = await request.formData();
-  const recipe = getRecipeFromForm(formData);
+  const recipe = await getObject(request, recipeUpdateSchema);
 
   if (typeof recipe.title !== "string" || recipe.title.length === 0) {
     return json({ errors: { title: "Title is required" } }, { status: 400 });
@@ -60,8 +60,6 @@ export async function action({ params, request }: ActionFunctionArgs) {
     return json({ errors: { source: "Invalid source type" } }, { status: 400 });
   }
 
-  console.log(`Updating recipe: ${params.recipeId}`);
-
   await updateRecipe({
     title: recipe.title,
     steps: recipe.steps as Step[],
@@ -70,8 +68,6 @@ export async function action({ params, request }: ActionFunctionArgs) {
     source: recipe.source,
     userId,
   });
-
-  console.log(`Recipe id: ${params.recipeId}`);
 
   return redirect(`/recipes/${params.recipeId}`);
 }
@@ -102,7 +98,7 @@ export default function RecipeDetailsPage() {
               ?.sort((i) => i.index)
               .map((ingredient) => {
                 return (
-                  <li key={ingredient.id}>
+                  <li key={ingredient.index}>
                     {ingredient.amount} {ingredient.item}
                   </li>
                 );
@@ -113,7 +109,7 @@ export default function RecipeDetailsPage() {
             {defaultValues.recipe.steps
               ?.sort((s) => s.index)
               .map((step) => {
-                return <li key={step.id}>{step.text}</li>;
+                return <li key={step.index}>{step.text}</li>;
               })}
           </ol>
         </>

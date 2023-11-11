@@ -71,7 +71,12 @@ export function updateRecipe({
           return {
             create: step,
             update: step,
-            where: { id: id, step: { id: step.id, recipeId: step.recipeId } },
+            where: {
+              index_recipeId: {
+                index: step.index,
+                recipeId: id,
+              },
+            },
           };
         }),
       },
@@ -81,8 +86,7 @@ export function updateRecipe({
             create: ingredient,
             update: ingredient,
             where: {
-              id: id,
-              ingredient: { id: ingredient.id, recipeId: ingredient.recipeId },
+              index_recipeId: { index: ingredient.index, recipeId: id },
             },
           };
         }),

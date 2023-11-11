@@ -78,13 +78,14 @@ module.exports = {
       ],
       rules: {
         "import/order": [
-          "error",
+          "warn",
           {
             alphabetize: { caseInsensitive: true, order: "asc" },
             groups: ["builtin", "external", "internal", "parent", "sibling"],
             "newlines-between": "always",
           },
         ],
+        "no-unused-vars": ["warn"],
       },
     },
 

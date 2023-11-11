@@ -10,22 +10,17 @@ export const RecipeStepInput: React.FC = () => {
     <div>
       <div className="flex flex-auto gap-2">
         <ol className="flex flex-col gap-2">
-          {steps.map(({ defaultValue, key }, index) => (
+          {steps.map(({ key }, index) => (
             <li key={key} className="flex flex-row gap-3 items-center">
-              <input
+              <FormInput
                 type="hidden"
-                name={`recipe.steps[${index}].index`}
+                name={`steps[${index}][index]`}
                 value={index}
-              />
-              <input
-                type="hidden"
-                name={`recipe.steps[${index}].id`}
-                value={defaultValue.id}
               />
               <FormInput
                 type="text"
                 label={`Step ${index + 1}`}
-                name={`recipe.steps[${index}].text`}
+                name={`steps[${index}][text]`}
               />
               <button
                 className="rounded bg-red-500 px-2 py-2 text-white hover:bg-red-600 focus:bg-red-400"

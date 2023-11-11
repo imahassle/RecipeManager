@@ -1,4 +1,5 @@
 import { useMatches } from "@remix-run/react";
+import { parse } from "qs";
 import { useMemo } from "react";
 
 import type { User } from "~/models/user.server";
@@ -73,6 +74,15 @@ export function useUser(): User {
 
 export function validateEmail(email: unknown): email is string {
   return typeof email === "string" && email.length > 3 && email.includes("@");
+}
+
+export async function getObject<T>(
+  request: Request,
+  parser: Zod.ZodSchema<T>,
+): Promise<T> {
+  const body = await request.text();
+  const obj = parse(body);
+  return parser.parse(obj);
 }
 
 export function getRecipeFromForm(formData: FormData) {
