@@ -1,4 +1,3 @@
-import { Recipe } from "@prisma/client";
 import { useMatches } from "@remix-run/react";
 import { useMemo } from "react";
 
@@ -80,8 +79,8 @@ export function getRecipeFromForm(formData: FormData) {
   const values = Object.fromEntries(formData);
 
   return {
-    title: values.title,
-    source: values.source,
-    steps: values.steps,
+    title: values.title as string,
+    source: values.source as string,
+    steps: values.steps as unknown,
   };
 }

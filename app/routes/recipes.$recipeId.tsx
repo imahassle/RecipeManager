@@ -9,11 +9,13 @@ import {
   useSearchParams,
 } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
-import { ValidatedForm, useFieldArray } from "remix-validated-form";
+import { ValidatedForm } from "remix-validated-form";
 import invariant from "tiny-invariant";
 import { z } from "zod";
 
 import { FormInput } from "~/components/formInput";
+import { RecipeStepInput } from "~/components/recipeStepInput";
+import { SubmitButton } from "~/components/submitButton";
 import { Step, getRecipe, updateRecipe } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 import { getRecipeFromForm } from "~/utils";
@@ -43,7 +45,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   return json({ recipe });
 };
 
-export const action = async ({ params, request }: ActionFunctionArgs) => {
+export async function action({ params, request }: ActionFunctionArgs) {
   const userId = await requireUserId(request);
   invariant(params.recipeId, "recipeId not found");
 
@@ -61,22 +63,23 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   console.log(`Updating recipe: ${params.recipeId}`);
 
   await updateRecipe({
-    ...recipe,
+    title: recipe.title,
+    steps: recipe.steps as Step[],
+    ingredients: [],
     id: params.recipeId,
+    source: recipe.source,
     userId,
   });
 
   console.log(`Recipe id: ${params.recipeId}`);
 
   return redirect(`/recipes/${params.recipeId}`);
-};
+}
 
 export default function RecipeDetailsPage() {
   const defaultValues = useLoaderData<typeof loader>();
   // const data = useActionData<typeof action>();
-  const [steps, { push, remove }] = useFieldArray<Step>("steps", {
-    formId: "recipeUpdateForm",
-  });
+
   const [params] = useSearchParams();
   const isEdit = params.get("edit") === "true";
 
@@ -118,82 +121,31 @@ export default function RecipeDetailsPage() {
         <>
           {/* Recipe edit form */}
           <ValidatedForm
-            validator={validator}
             method="post"
-            id="recipeUpdateForm"
+            validator={validator}
+            noValidate={true}
             defaultValues={defaultValues.recipe}
           >
             <div className="flex flex-col gap-3">
               <div className="flex flex-auto gap-2">
                 <label htmlFor="title">Recipe title</label>
-                <input
+                <FormInput
                   className="border-blue-500 border-2"
                   name="title"
                   type="text"
-                  defaultValue={defaultValues.recipe.title ?? ""}
                 />
               </div>
               <div className="flex flex-auto gap-2">
                 <label htmlFor="source">Recipe source</label>
-                <input
+                <FormInput
                   className="border-blue-500 border-2"
                   name="source"
                   type="text"
-                  defaultValue={defaultValues.recipe.source ?? ""}
                 />
               </div>
-              <div className="flex flex-auto gap-2">
-                <ol className="flex flex-col gap-2">
-                  {steps.map(({ defaultValue, key }, index) => (
-                    <li key={key} className="flex flex-row gap-2">
-                      <div>
-                        <input
-                          type="hidden"
-                          name={`recipe.steps[${index}].index`}
-                          value={index}
-                        />
-                        <input
-                          type="hidden"
-                          name={`recipe.steps[${index}].id`}
-                          value={defaultValue.id}
-                        />
-                        <FormInput
-                          type="text"
-                          label={"step"}
-                          name={`recipe.steps[${index}].text`}
-                          multiple
-                        />
-                      </div>
-                      <button
-                        className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600 focus:bg-red-400"
-                        onClick={() => {
-                          remove(index);
-                        }}
-                      >
-                        X
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-              <div className="flex flex-auto gap-2">
-                <button
-                  type="button"
-                  className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-40"
-                  onClick={() => {
-                    push({});
-                  }}
-                >
-                  Add step
-                </button>
-              </div>
+              <RecipeStepInput />
               <div className="flex flex-row-reverse">
-                <button
-                  type="submit"
-                  className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
-                >
-                  Save changes
-                </button>
+                <SubmitButton />
               </div>
             </div>
             {/* <input name="tags" type="text" defaultValue={data.recipe.tags} multiple/> */}

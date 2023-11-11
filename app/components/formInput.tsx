@@ -13,16 +13,23 @@ export const FormInput: React.FC<FormInputProps> = ({
   type,
   ...props
 }) => {
-  const defaultValue = useField(name);
+  const { error, defaultValue } = useField(name);
+
   return (
     <>
       {label ? <label htmlFor={name}>{label}</label> : null}
-      <input
-        type={type ?? "text"}
-        name={name}
-        defaultValue={defaultValue.defaultValue}
-        {...props}
-      />
+      <div className="flex flex-col gap-1">
+        <input
+          type={type ?? "text"}
+          name={name}
+          defaultValue={defaultValue}
+          className={`rounded border-2 border-blue-400 active:border-blue-600 ${
+            error ? "border-red-600 active:border-red-600" : ""
+          } ${props.className}`}
+          {...props}
+        />
+        {error ? <p className="text-red-600">{error}</p> : null}
+      </div>
     </>
   );
 };

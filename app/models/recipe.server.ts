@@ -47,6 +47,12 @@ export function deleteRecipe({ id, userId }: Pick<Recipe, "id"> & UserId) {
   });
 }
 
+export type RecipeUpdate = Pick<Recipe, "id" | "title" | "source"> & {
+  steps?: Step[];
+} & {
+  ingredients?: Ingredient[];
+} & UserId;
+
 export function updateRecipe({
   id,
   title,
@@ -54,9 +60,7 @@ export function updateRecipe({
   steps,
   ingredients,
   userId,
-}: Pick<Recipe, "id" | "title" | "source"> & { steps?: Step[] } & {
-  ingredients?: Ingredient[];
-} & UserId) {
+}: RecipeUpdate) {
   return prisma.recipe.update({
     where: { id_userId: { id, userId } },
     data: {
